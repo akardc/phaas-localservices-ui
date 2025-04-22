@@ -4,9 +4,8 @@ import (
 	"embed"
 	"log/slog"
 	"os"
-	"phaas-localservices-ui/repo"
+	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/repo_browser"
-	"phaas-localservices-ui/settings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -66,7 +65,7 @@ func (l SlogLogger) Trace(message string) {
 
 func main() {
 	// Create an instance of the app structure
-	settings := settings.Settings{
+	settings := app.Settings{
 		ReposDirPath: "/Users/cakard/go/src/github.com/BidPal",
 		DataDirPath:  "/users/cakard/Documents/phaas-localservices-ui",
 	}
@@ -86,9 +85,6 @@ func main() {
 		OnStartup:        repoBrowser.Startup,
 		Bind: []interface{}{
 			repoBrowser,
-		},
-		EnumBind: []interface{}{
-			repo.AllRunningStatus,
 		},
 	})
 

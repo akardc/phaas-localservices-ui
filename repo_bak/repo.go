@@ -1,4 +1,4 @@
-package repo
+package repo_bak
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"phaas-localservices-ui/settings"
+	"phaas-localservices-ui/app"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -27,14 +27,14 @@ type Repo struct {
 
 	data *repoData
 
-	settings *settings.Settings
+	settings *app.Settings
 }
 
 type repoData struct {
 	RunPID int `json:"pid"`
 }
 
-func NewRepo(dir os.DirEntry, path string, settings *settings.Settings) (*Repo, error) {
+func NewRepo(dir os.DirEntry, path string, settings *app.Settings) (*Repo, error) {
 
 	dataDirPath := fmt.Sprintf("%s/%s", settings.DataDirPath, dir.Name())
 	if err := os.Mkdir(dataDirPath, os.ModePerm); err != nil && !os.IsExist(err) {

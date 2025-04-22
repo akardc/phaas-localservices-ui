@@ -1,0 +1,22 @@
+@use '@angular/material' as mat;
+
+.start-button {
+  @include mat.button-overrides((
+    filled-container-color: green,
+    filled-label-text-color: white,
+  ));
+}
+
+.stop-button {
+  @include mat.button-overrides((
+    filled-container-color: darkred,
+    filled-label-text-color: white,
+  ));
+}
+
+.running-dot {
+  background: yellowgreen;
+  height: 20px;
+  width: 20px;
+  border-radius: 20px;
+}

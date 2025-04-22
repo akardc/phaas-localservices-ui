@@ -3,11 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"phaas-localservices-ui/app"
+	"phaas-localservices-ui/repo"
+	repobrowser "phaas-localservices-ui/repo_browser"
 )
 
 // App struct
 type App struct {
 	ctx context.Context
+
+	appSettings *app.Settings
+	repoFactory *repo.Factory
+	repoBrowser *repobrowser.RepoBrowser
 }
 
 // NewApp creates a new App application struct

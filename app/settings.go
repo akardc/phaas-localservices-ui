@@ -1,4 +1,4 @@
-package settings
+package app
 
 type Settings struct {
 	ReposDirPath string

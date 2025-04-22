@@ -1,42 +1,36 @@
 export namespace repo {
 	
-	export enum RunningStatus {
-	    Running = "Running",
-	    Stopped = "Stopped",
-	    Unknown = "Unknown",
-	}
-
-}
-
-export namespace repobrowser {
-	
-	export class ListReposOptions {
-	    nameRegex: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListReposOptions(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.nameRegex = source["nameRegex"];
-	    }
-	}
-	export class RepoInfo {
+	export class BasicDetails {
 	    name: string;
-	    // Go type: time
-	    lastModified: any;
-	    branch: string;
+	    path: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new RepoInfo(source);
+	        return new BasicDetails(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
+	        this.path = source["path"];
+	    }
+	}
+	export class Status {
+	    // Go type: time
+	    lastModified: any;
+	    branch: string;
+	    isClean: boolean;
+	    running: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Status(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.lastModified = this.convertValues(source["lastModified"], null);
 	        this.branch = source["branch"];
+	        this.isClean = source["isClean"];
+	        this.running = source["running"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
