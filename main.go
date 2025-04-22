@@ -1,0 +1,98 @@
+package main
+
+import (
+	"embed"
+	"log/slog"
+	"os"
+	"phaas-localservices-ui/repo"
+	"phaas-localservices-ui/repo_browser"
+	"phaas-localservices-ui/settings"
+
+	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/logger"
+	"github.com/wailsapp/wails/v2/pkg/options"
+	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+)
+
+//go:embed all:frontend/dist
+var assets embed.FS
+
+func SetupLogger() logger.Logger {
+	logger := slog.Default()
+	slogger := SlogLogger{
+		logger: logger,
+	}
+	slog.SetDefault(logger)
+	return slogger
+}
+
+type SlogLogger struct {
+	logger *slog.Logger
+}
+
+func (l SlogLogger) Print(message string) {
+	l.logger.Info(message)
+}
+
+func (l SlogLogger) Info(message string) {
+	l.logger.Info(message)
+}
+
+func (l SlogLogger) Error(message string) {
+	l.logger.Error(message)
+}
+
+func (l SlogLogger) Warning(message string) {
+	l.logger.Warn(message)
+}
+
+func (l SlogLogger) Panic(message string) {
+	l.logger.Error(message)
+	panic(message)
+}
+
+func (l SlogLogger) Fatal(message string) {
+	l.logger.Error(message)
+	os.Exit(1)
+}
+
+func (l SlogLogger) Debug(message string) {
+	l.logger.Debug(message)
+}
+
+func (l SlogLogger) Trace(message string) {
+	l.logger.Debug(message)
+}
+
+func main() {
+	// Create an instance of the app structure
+	settings := settings.Settings{
+		ReposDirPath: "/Users/cakard/go/src/github.com/BidPal",
+		DataDirPath:  "/users/cakard/Documents/phaas-localservices-ui",
+	}
+	repoBrowser := repobrowser.NewRepoBrowser(&settings)
+
+	// Create application with options
+	err := wails.Run(&options.App{
+		Title:  "phaas-localservices-ui",
+		Width:  1024,
+		Height: 768,
+		AssetServer: &assetserver.Options{
+			Assets: assets,
+		},
+		Logger:           SetupLogger(),
+		LogLevel:         logger.INFO,
+		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		OnStartup:        repoBrowser.Startup,
+		Bind: []interface{}{
+			repoBrowser,
+		},
+		EnumBind: []interface{}{
+			repo.AllRunningStatus,
+		},
+	})
+
+	if err != nil {
+		println("Error:", err.Error())
+	}
+}
