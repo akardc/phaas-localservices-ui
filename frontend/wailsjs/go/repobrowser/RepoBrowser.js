@@ -10,8 +10,16 @@ export function List() {
   return window['go']['repobrowser']['RepoBrowser']['List']();
 }
 
+export function RegisterRunningRepoStatusWatcher(arg1) {
+  return window['go']['repobrowser']['RepoBrowser']['RegisterRunningRepoStatusWatcher'](arg1);
+}
+
 export function StartRepo(arg1) {
   return window['go']['repobrowser']['RepoBrowser']['StartRepo'](arg1);
+}
+
+export function Startup(arg1) {
+  return window['go']['repobrowser']['RepoBrowser']['Startup'](arg1);
 }
 
 export function StopRepo(arg1) {

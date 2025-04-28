@@ -1,39 +1,58 @@
 <table mat-table [dataSource]="repos" class="mat-elevation-z8">
 
   <ng-container matColumnDef="running">
-    <th mat-header-cell *matHeaderCellDef>Running</th>
+    <th mat-header-cell *matHeaderCellDef></th>
     <td mat-cell *matCellDef="let element; dataSource: repos">
-      @if ((element.status$ | async)?.running) {
+      @if ((element.branchInfo$ | async)?.running) {
         <div class="running-dot"></div>
       }
     </td>
   </ng-container>
 
   <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef> Name</th>
+    <th mat-header-cell *matHeaderCellDef>Name</th>
     <td mat-cell *matCellDef="let element; dataSource: repos"> {{ element.basicDetails.name }}</td>
   </ng-container>
 
   <ng-container matColumnDef="lastModified">
-    <th mat-header-cell *matHeaderCellDef> Last Modified</th>
-    <td mat-cell
-        *matCellDef="let element; dataSource: repos"> {{ (element.status$ | async)?.lastModified | date:'short' }}
+    <th mat-header-cell *matHeaderCellDef>Last Modified</th>
+    <td mat-cell *matCellDef="let element; dataSource: repos">
+      {{ (element.branchInfo$ | async)?.lastModified | date:'short' }}
     </td>
   </ng-container>
 
   <ng-container matColumnDef="branch">
     <th mat-header-cell *matHeaderCellDef>Branch</th>
-    <td mat-cell *matCellDef="let element; dataSource: repos"> {{ (element.status$ | async)?.branch }}</td>
+    <td mat-cell *matCellDef="let element; dataSource: repos"> {{ (element.branchInfo$ | async)?.branch }}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="runningStatus">
+    <th mat-header-cell *matHeaderCellDef>Status</th>
+    <td mat-cell *matCellDef="let element; dataSource: repos">
+      <span [matTooltip]="element.status.description">{{ element.status.status }}</span>
+    </td>
   </ng-container>
 
   <ng-container matColumnDef="button">
     <th mat-header-cell *matHeaderCellDef></th>
     <td mat-cell *matCellDef="let element; dataSource: repos">
-      @if ((element.status$ | async)?.running) {
+      @if ((element.branchInfo$ | async)?.running) {
         <button mat-flat-button color="primary" class="stop-button" (click)="element.stop()">Stop</button>
       } @else {
-        <button mat-flat-button color="primary" class="start-button" (click)="element.start()">Start</button>
+        <button mat-flat-button color="primary" class="start-button" (click)="element.start()" [disabled]="element.status.status === 'starting'">
+          Start
+        </button>
       }
+    </td>
+  </ng-container>
+
+  <ng-container matColumnDef="menu">
+    <th mat-header-cell *matHeaderCellDef></th>
+    <td mat-cell *matCellDef="let element; dataSource: repos">
+      <button mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="element.watch()">Watch Running Status</button>
+      </mat-menu>
     </td>
   </ng-container>
 

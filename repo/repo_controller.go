@@ -1,52 +1,84 @@
 package repo
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"phaas-localservices-ui/app"
+	"phaas-localservices-ui/scheduler"
 	"regexp"
 	"time"
 )
 
 type Controller interface {
 	GetBasicDetails() BasicDetails
-	GetStatus() (*Status, error)
+	GetLastModifiedTime() (time.Time, error)
+	GetActiveBranch() (string, error)
+	GetStatus() (Status, error)
+	GetStatusNotificationChannel() string
+	RegisterStatusWatcher() error
 	Start() error
 	Stop() error
 }
 
+type State string
+
+const (
+	StateUnknown  State = "unknown"
+	StateStarting State = "starting"
+	StateRunning  State = "running"
+	StateStopped  State = "stopped"
+)
+
+var AllStates = []struct {
+	Value  State
+	TSName string
+}{
+	{StateUnknown, "Unknown"},
+	{StateStarting, "starting"},
+	{StateRunning, "running"},
+	{StateStopped, "stopped"},
+}
+
 type Status struct {
-	LastModified time.Time `json:"lastModified"`
-	Branch       string    `json:"branch"`
-	IsClean      bool      `json:"isClean"`
-	Running      bool      `json:"running"`
+	State State `json:"state"`
 }
 
 type BasicDetails struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Name                      string `json:"name"`
+	Path                      string `json:"path"`
+	StatusUpdatedEventChannel string `json:"statusUpdatedEventChannel"`
 }
 
 type Factory struct {
-	settings *app.Settings
+	settings     *app.Settings
+	jobScheduler *scheduler.Scheduler
 }
 
-func NewFactory(settings *app.Settings) *Factory {
+func NewFactory(
+	settings *app.Settings,
+	jobScheduler *scheduler.Scheduler,
+) *Factory {
 	return &Factory{
-		settings: settings,
+		settings:     settings,
+		jobScheduler: jobScheduler,
 	}
 }
 
 var apiRegex = regexp.MustCompile("phaas-.*-api")
 var uiRegex = regexp.MustCompile("phaas-.*-ui")
 
-func (this *Factory) BuildRepoController(path string, name string, dir os.DirEntry) Controller {
+func (this *Factory) BuildRepoController(ctx context.Context, path string, name string, dir os.DirEntry) Controller {
 	if apiRegex.MatchString(name) {
 		return &apiController{
-			appSettings: this.settings,
+			ctx:          ctx,
+			appSettings:  this.settings,
+			jobScheduler: this.jobScheduler,
 			repoDetails: repoDetails{
-				name: name,
-				path: path,
-				dir:  dir,
+				name:                      name,
+				path:                      path,
+				statusUpdatedEventChannel: fmt.Sprintf("status-updated:%s", name),
+				dir:                       dir,
 			},
 		}
 	}

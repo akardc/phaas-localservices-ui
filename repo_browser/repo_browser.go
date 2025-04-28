@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/repo"
+	"phaas-localservices-ui/scheduler"
+	"slices"
+	"strings"
 )
 
 type RepoStore struct {
@@ -45,6 +48,7 @@ type RepoBrowser struct {
 	ctx      context.Context
 	settings *app.Settings
 
+	jobScheduler          *scheduler.Scheduler
 	repoControllerFactory *repo.Factory
 
 	repos RepoStore
@@ -52,11 +56,14 @@ type RepoBrowser struct {
 
 func NewRepoBrowser(
 	appSettings *app.Settings,
+	jobScheduler *scheduler.Scheduler,
+	repoControllerFactory *repo.Factory,
 ) *RepoBrowser {
 	return &RepoBrowser{
 		settings:              appSettings,
+		jobScheduler:          jobScheduler,
 		repos:                 RepoStore{},
-		repoControllerFactory: repo.NewFactory(appSettings),
+		repoControllerFactory: repoControllerFactory,
 	}
 }
 
@@ -84,7 +91,7 @@ func (this *RepoBrowser) initRepos() error {
 		}
 		repoName := folder.Name()
 		path := filepath.Join(this.settings.ReposDirPath, repoName)
-		repoController := this.repoControllerFactory.BuildRepoController(path, repoName, folder)
+		repoController := this.repoControllerFactory.BuildRepoController(this.ctx, path, repoName, folder)
 		if repoController != nil {
 			this.repos.Push(repoName, repoController)
 		}
@@ -94,22 +101,25 @@ func (this *RepoBrowser) initRepos() error {
 
 type Filter struct{}
 
-func (this *RepoBrowser) List() ([]repo.BasicDetails, error) {
+func (this *RepoBrowser) ListRepos() ([]repo.BasicDetails, error) {
 	list := make([]repo.BasicDetails, 0)
 	for _, repoController := range this.repos.List() {
 		list = append(list, repoController.GetBasicDetails())
 	}
+	slices.SortFunc(list, func(a, b repo.BasicDetails) int {
+		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+	})
 	return list, nil
 }
 
-func (this *RepoBrowser) GetStatus(repoName string) (*repo.Status, error) {
+func (this *RepoBrowser) GetRepoStatus(repoName string) (repo.Status, error) {
 	repoController, err := this.repos.Get(repoName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
+		return repo.Status{}, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
 	}
 	status, err := repoController.GetStatus()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
+		return repo.Status{}, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
 	}
 	return status, nil
 }
@@ -136,4 +146,12 @@ func (this *RepoBrowser) StopRepo(repoName string) error {
 		return fmt.Errorf("failed to stop repo '%s': %w", repoName, err)
 	}
 	return nil
+}
+
+func (this *RepoBrowser) RegisterRepoStatusWatcher(repoName string) error {
+	repoController, err := this.repos.Get(repoName)
+	if err != nil {
+		return fmt.Errorf("failed to get repo '%s': %w", repoName, err)
+	}
+	return repoController.RegisterStatusWatcher()
 }

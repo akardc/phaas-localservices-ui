@@ -28,12 +28,12 @@ func DefaultClient() (*client.Client, error) {
 
 var ErrNoContainerFound = fmt.Errorf("no container found")
 
-func GetContainer(containerName string) (container.Summary, error) {
+func GetContainer(ctx context.Context, containerName string) (container.Summary, error) {
 	dockerClient, err := DefaultClient()
 	if err != nil {
 		return container.Summary{}, fmt.Errorf("failed to get docker client: %w", err)
 	}
-	containers, err := dockerClient.ContainerList(context.Background(), container.ListOptions{Filters: filters.NewArgs(
+	containers, err := dockerClient.ContainerList(ctx, container.ListOptions{Filters: filters.NewArgs(
 		filters.Arg("name", containerName),
 	)})
 	if err != nil {
@@ -47,20 +47,34 @@ func GetContainer(containerName string) (container.Summary, error) {
 	return container.Summary{}, ErrNoContainerFound
 }
 
-type ContainerStatus struct {
-	Running bool
-}
-
-func GetStatus(containerName string) (*ContainerStatus, error) {
+func ListAllContainers(ctx context.Context) ([]container.Summary, error) {
 	dockerClient, err := DefaultClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get docker client: %w", err)
 	}
-	c, err := GetContainer(containerName)
+	containers, err := dockerClient.ContainerList(ctx, container.ListOptions{
+		All: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers: %w", err)
+	}
+	return containers, nil
+}
+
+type ContainerStatus struct {
+	Running bool
+}
+
+func GetStatus(ctx context.Context, containerName string) (*container.InspectResponse, error) {
+	dockerClient, err := DefaultClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker client: %w", err)
+	}
+	c, err := GetContainer(ctx, containerName)
 	if err != nil {
 		if errors.Is(err, ErrNoContainerFound) {
-			slog.With(slog.String("container", containerName)).Info("No container found")
-			return &ContainerStatus{Running: false}, nil
+			slog.With(slog.String("container", containerName)).Debug("No container found")
+			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get container: %w", err)
 	}
@@ -68,15 +82,15 @@ func GetStatus(containerName string) (*ContainerStatus, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container: %w", err)
 	}
-	return &ContainerStatus{Running: inspection.State.Running}, nil
+	return &inspection, nil
 }
 
-func StopContainer(containerName string) error {
+func StopContainer(ctx context.Context, containerName string) error {
 	dockerClient, err := DefaultClient()
 	if err != nil {
 		return fmt.Errorf("failed to get docker client: %w", err)
 	}
-	c, err := GetContainer(containerName)
+	c, err := GetContainer(ctx, containerName)
 	if err != nil {
 		if errors.Is(err, ErrNoContainerFound) {
 			slog.With(slog.String("container", containerName)).Info("No container found")

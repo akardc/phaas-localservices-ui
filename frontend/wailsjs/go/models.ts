@@ -3,6 +3,7 @@ export namespace repo {
 	export class BasicDetails {
 	    name: string;
 	    path: string;
+	    statusUpdatedEventChannel: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new BasicDetails(source);
@@ -12,6 +13,7 @@ export namespace repo {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
 	        this.path = source["path"];
+	        this.statusUpdatedEventChannel = source["statusUpdatedEventChannel"];
 	    }
 	}
 	export class Status {
