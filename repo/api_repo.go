@@ -16,34 +16,31 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type repoDetails struct {
-	name                      string
-	path                      string
-	statusUpdatedEventChannel string
-	dir                       os.DirEntry
-}
-
 type apiController struct {
 	ctx context.Context
 
-	repoDetails repoDetails
+	name                      string
+	path                      string
+	statusNotificationChannel string
+	dir                       os.DirEntry
 
 	jobScheduler *scheduler.Scheduler
 	appSettings  *app.Settings
 
+	startedPID   int
 	latestStatus Status
 }
 
 func (this *apiController) GetBasicDetails() BasicDetails {
 	return BasicDetails{
-		Name:                      this.repoDetails.name,
-		Path:                      this.repoDetails.path,
-		StatusUpdatedEventChannel: this.repoDetails.statusUpdatedEventChannel,
+		Name:                      this.name,
+		Path:                      this.path,
+		StatusNotificationChannel: this.GetStatusNotificationChannel(),
 	}
 }
 
 func (this *apiController) GetLastModifiedTime() (time.Time, error) {
-	dirInfo, err := this.repoDetails.dir.Info()
+	dirInfo, err := this.dir.Info()
 	if err != nil {
 		return time.Time{}, fmt.Errorf("error getting repo details: %w", err)
 	}
@@ -51,7 +48,7 @@ func (this *apiController) GetLastModifiedTime() (time.Time, error) {
 }
 
 func (this *apiController) GetActiveBranch() (string, error) {
-	repo, err := git.PlainOpen(this.repoDetails.path)
+	repo, err := git.PlainOpen(this.path)
 	if err != nil {
 		return "", fmt.Errorf("error opening repo: %w", err)
 	}
@@ -67,12 +64,30 @@ func (this *apiController) GetActiveBranch() (string, error) {
 }
 
 func (this *apiController) GetStatus() (Status, error) {
-	status, err := dockerclient.GetStatus(this.ctx, this.repoDetails.name)
+
+	foundProcess := false
+	if this.startedPID != 0 {
+		proc, err := os.FindProcess(this.startedPID)
+		if err != nil {
+			this.startedPID = 0
+			if !errors.Is(err, os.ErrNotExist) && !errors.Is(err, os.ErrProcessDone) {
+				slog.With(slog.Any("error", err)).Error("Failed to find started process")
+				// not returning so we can fall back to docker lookup
+			}
+		} else if proc != nil {
+			foundProcess = true
+		}
+	}
+
+	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil {
 		return Status{}, fmt.Errorf("error getting docker container status: %w", err)
 	}
-	if status.State == nil {
-		return Status{State: StateUnknown}, nil
+	if status == nil || status.State == nil {
+		if foundProcess {
+			return Status{State: StateStarting}, nil
+		}
+		return Status{State: StateStopped}, nil
 	}
 	if status.State.Running {
 		return Status{State: StateRunning}, nil
@@ -82,21 +97,38 @@ func (this *apiController) GetStatus() (Status, error) {
 }
 
 func (this *apiController) GetStatusNotificationChannel() string {
-	return fmt.Sprintf("events-%s-status", this.repoDetails.name)
+	return fmt.Sprintf("events-%s-status", this.name)
 }
 
 func (this *apiController) RegisterStatusWatcher() error {
-	jobName := fmt.Sprintf("%s-status-watcher", this.repoDetails.name)
+	jobName := fmt.Sprintf("%s-status-watcher", this.name)
 	err := this.jobScheduler.AddJob(jobName, 30*time.Second, func() {
 		err := this.refreshStatus()
 		if err != nil {
-			slog.With(slog.Any("error", err), slog.String("repo", this.repoDetails.name)).Error("Error refreshing status for repo")
+			slog.With(slog.Any("error", err), slog.String("repo", this.name)).Error("Error refreshing status for repo")
 		}
 	})
 	if err != nil && !errors.Is(err, scheduler.ErrJobAlreadyExists) {
 		return fmt.Errorf("error adding status watcher job: %w", err)
 	}
 	return nil
+}
+
+func (this *apiController) startLowLatencyStatusWatcher() {
+	jobName := fmt.Sprintf("%s-status-watcher-low-latency", this.name)
+	err := this.jobScheduler.AddJob(jobName, 1*time.Second, func() {
+		err := this.refreshStatus()
+		if err != nil {
+			slog.With(slog.Any("error", err), slog.String("repo", this.name)).Error("Error refreshing status for repo")
+		}
+		if this.latestStatus.State == StateStopped {
+			slog.InfoContext(this.ctx, "Stopping low-latency status watcher")
+			this.jobScheduler.RemoveJob(jobName)
+		}
+	})
+	if err != nil && !errors.Is(err, scheduler.ErrJobAlreadyExists) {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "failed to start low latency status watcher")
+	}
 }
 
 func (this *apiController) refreshStatus() error {
@@ -124,19 +156,19 @@ func (this *apiController) Start() error {
 		return err
 	}
 
-	status, err := dockerclient.GetStatus(this.ctx, this.repoDetails.name)
+	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status != nil && status.State.Running {
-		slog.With(slog.String("repo", this.repoDetails.name)).Info("Already running")
+		slog.With(slog.String("repo", this.name)).Info("Already running")
 		return nil
 	}
 
 	cmd := exec.Command("mage", "serve")
-	cmd.Dir = this.repoDetails.path
+	cmd.Dir = this.path
 
-	repoDataPath := fmt.Sprintf("%s/%s", this.appSettings.DataDirPath, this.repoDetails.name)
+	repoDataPath := fmt.Sprintf("%s/%s", this.appSettings.DataDirPath, this.name)
 	err = os.Mkdir(repoDataPath, os.ModePerm)
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		return fmt.Errorf("failed to create data dir: %w", err)
@@ -157,40 +189,47 @@ func (this *apiController) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to start repo: %w", err)
 	}
+	if cmd.Process != nil {
+		this.startedPID = cmd.Process.Pid
+	}
+
+	this.startLowLatencyStatusWatcher()
 
 	return nil
 }
 
 func (this *apiController) Stop() error {
-	status, err := dockerclient.GetStatus(this.ctx, this.repoDetails.name)
+	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status == nil || !status.State.Running {
-		slog.With(slog.String("repo", this.repoDetails.name)).Info("Already stopped")
+		slog.With(slog.String("repo", this.name)).Info("Already stopped")
+		this.startedPID = 0
 		return nil
 	}
-	err = dockerclient.StopContainer(this.ctx, this.repoDetails.name)
+	err = dockerclient.StopContainer(this.ctx, this.name)
 	if err != nil {
-		slog.With(slog.Any("error", err), slog.String("repo", this.repoDetails.name)).Info("Failed to stop container")
+		slog.With(slog.Any("error", err), slog.String("repo", this.name)).Info("Failed to stop container")
 		return fmt.Errorf("error stopping repo: %w", err)
 	}
+	this.startedPID = 0
 	return nil
 }
 
 func (this *apiController) startMysql() error {
-	mysqlName := this.repoDetails.name + "-mysql"
+	mysqlName := this.name + "-mysql"
 	status, err := dockerclient.GetStatus(this.ctx, mysqlName)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status != nil && status.State.Running {
-		slog.With(slog.String("repo", this.repoDetails.name)).Info("Mysql already running")
+		slog.With(slog.String("repo", this.name)).Info("Mysql already running")
 		return nil
 	}
 
 	cmd := exec.Command("mage", "mysqlup")
-	cmd.Dir = this.repoDetails.path
+	cmd.Dir = this.path
 	// TODO: need to add support for this in mage
 	cmd.Env = append(cmd.Environ(), "PHAAS_DOCKER_DISABLE_INTERACTIVE=1")
 

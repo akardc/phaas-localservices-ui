@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log/slog"
 	"os"
+	"phaas-localservices-ui/repo"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -78,6 +79,9 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        a.startup,
 		Bind:             a.getExposedInterfaces(),
+		EnumBind: []interface{}{
+			repo.AllStates,
+		},
 	})
 
 	if err != nil {

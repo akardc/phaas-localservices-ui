@@ -15,8 +15,14 @@
 }
 
 .running-dot {
-  background: yellowgreen;
   height: 20px;
   width: 20px;
   border-radius: 20px;
+
+  &.green {
+    background: green;
+  }
+  &.yellow {
+    background: yellow;
+  }
 }

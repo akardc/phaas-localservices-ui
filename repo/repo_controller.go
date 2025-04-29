@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/scheduler"
@@ -47,7 +46,7 @@ type Status struct {
 type BasicDetails struct {
 	Name                      string `json:"name"`
 	Path                      string `json:"path"`
-	StatusUpdatedEventChannel string `json:"statusUpdatedEventChannel"`
+	StatusNotificationChannel string `json:"statusNotificationChannel"`
 }
 
 type Factory struct {
@@ -74,12 +73,9 @@ func (this *Factory) BuildRepoController(ctx context.Context, path string, name 
 			ctx:          ctx,
 			appSettings:  this.settings,
 			jobScheduler: this.jobScheduler,
-			repoDetails: repoDetails{
-				name:                      name,
-				path:                      path,
-				statusUpdatedEventChannel: fmt.Sprintf("status-updated:%s", name),
-				dir:                       dir,
-			},
+			name:         name,
+			path:         path,
+			dir:          dir,
 		}
 	}
 	return nil

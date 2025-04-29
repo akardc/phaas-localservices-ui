@@ -148,6 +148,14 @@ func (this *RepoBrowser) StopRepo(repoName string) error {
 	return nil
 }
 
+func (this *RepoBrowser) GetRepoRepoStatusNotificationChannel(repoName string) (string, error) {
+	repoController, err := this.repos.Get(repoName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get repo '%s': %w", repoName, err)
+	}
+	return repoController.GetStatusNotificationChannel(), nil
+}
+
 func (this *RepoBrowser) RegisterRepoStatusWatcher(repoName string) error {
 	repoController, err := this.repos.Get(repoName)
 	if err != nil {

@@ -41,6 +41,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
 	a.repoBrowser.Startup(ctx)
+	a.jobScheduler.Start(ctx)
 }
 
 func (a *App) getExposedInterfaces() []any {

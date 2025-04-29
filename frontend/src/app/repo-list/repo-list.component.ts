@@ -1,13 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, computed, OnInit, Signal } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
-import {
-  GetStatus,
-  List,
-  RegisterRunningRepoStatusWatcher,
-  StartRepo,
-  StopRepo
-} from '../../../wailsjs/go/repobrowser/RepoBrowser';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { GetRepoStatus, StartRepo, StopRepo } from '../../../wailsjs/go/repobrowser/RepoBrowser';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Observable, ReplaySubject } from 'rxjs';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -15,8 +8,10 @@ import { repo } from '../../../wailsjs/go/models';
 import { TypeSafeMatCellDef } from '../../lib/type-safe-mat-cell-def.directive';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
-import { EventsOn } from '../../../wailsjs/runtime';
 import { MatTooltip } from '@angular/material/tooltip';
+import { ControllersService } from '../repo-controller/controllers.service';
+import { RepoController } from '../repo-controller/repo-controller';
+import State = repo.State;
 
 export class Repo {
   basicDetails: repo.BasicDetails;
@@ -70,16 +65,16 @@ export class Repo {
   }
 
   watch() {
-    RegisterRunningRepoStatusWatcher(this.basicDetails.name).then(
-      (channel) => EventsOn(channel, (status: any) => this.status = {
-        status: status?.status || '',
-        description: status?.description || '',
-      }),
-    );
+    // RegisterRunningRepoStatusWatcher(this.basicDetails.name).then(
+    //   (channel) => EventsOn(channel, (status: any) => this.status = {
+    //     status: status?.status || '',
+    //     description: status?.description || '',
+    //   }),
+    // );
   }
 
   private refreshBranchInfo() {
-    GetStatus(this.basicDetails.name).then(
+    GetRepoStatus(this.basicDetails.name).then(
       (status) => {
         console.log(this.basicDetails, status);
         this.statusSub.next(status);
@@ -106,15 +101,20 @@ export class Repo {
   templateUrl: './repo-list.component.html',
   styleUrl: './repo-list.component.scss'
 })
-export class RepoListComponent {
+export class RepoListComponent implements OnInit {
+
+  readonly State = State;
 
   displayedColumns = ['running', 'name', 'lastModified', 'branch', 'runningStatus', 'button', 'menu'];
 
-  repos: Repo[] = [];
+  repos: Signal<RepoController[]>;
 
-  constructor() {
-    fromPromise(List()).subscribe((list) => {
-      this.repos = list.map((r) => new Repo(r));
-    });
+  constructor(
+    private controllers: ControllersService,
+  ) {
+    this.repos = computed(() => this.controllers.controllers());
+  }
+
+  ngOnInit() {
   }
 }

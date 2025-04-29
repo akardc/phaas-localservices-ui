@@ -3,11 +3,13 @@
 import {repo} from '../models';
 import {context} from '../models';
 
-export function GetStatus(arg1:string):Promise<repo.Status>;
+export function GetRepoRepoStatusNotificationChannel(arg1:string):Promise<string>;
 
-export function List():Promise<Array<repo.BasicDetails>>;
+export function GetRepoStatus(arg1:string):Promise<repo.Status>;
 
-export function RegisterRunningRepoStatusWatcher(arg1:string):Promise<string>;
+export function ListRepos():Promise<Array<repo.BasicDetails>>;
+
+export function RegisterRepoStatusWatcher(arg1:string):Promise<void>;
 
 export function StartRepo(arg1:string):Promise<void>;
 

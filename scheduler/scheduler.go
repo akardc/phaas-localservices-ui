@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"sync"
 	"time"
 )
 
 type Scheduler struct {
 	jobs    map[string]*job
 	running bool
+	mutex   sync.Mutex
 }
 
 func New() *Scheduler {
@@ -46,6 +48,8 @@ type job struct {
 var ErrJobAlreadyExists = errors.New("job already exists")
 
 func (this *Scheduler) AddJob(name string, period time.Duration, fn func()) error {
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
 	_, alreadyExists := this.jobs[name]
 	if alreadyExists {
 		return ErrJobAlreadyExists
@@ -61,6 +65,8 @@ func (this *Scheduler) AddJob(name string, period time.Duration, fn func()) erro
 }
 
 func (this *Scheduler) RemoveJob(name string) {
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
 	delete(this.jobs, name)
 }
 
