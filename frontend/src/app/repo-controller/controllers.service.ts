@@ -26,8 +26,18 @@ export class ControllersService {
     });
   }
 
-  sortByName() {
-    this.allRepos.sort((a, b) => a.name.localeCompare(b.name));
+  sortByName(direction?: 'asc' | 'desc' | '') {
+    let asc = false;
+    if (!direction || direction === 'asc') {
+      asc = true;
+    }
+    this.allRepos.sort((a, b) => {
+      if (asc) {
+        return a.name.localeCompare(b.name);
+      } else {
+        return b.name.localeCompare(a.name);
+      }
+    });
     this.controllers.set(this.allRepos);
   }
 }

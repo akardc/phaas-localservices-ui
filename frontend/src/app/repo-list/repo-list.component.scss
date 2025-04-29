@@ -1,5 +1,11 @@
 @use '@angular/material' as mat;
 
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .start-button {
   @include mat.button-overrides((
     filled-container-color: green,

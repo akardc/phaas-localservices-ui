@@ -1,72 +1,80 @@
-<table mat-table [dataSource]="repos()" class="mat-elevation-z8">
+<div class="repo-list">
 
-  <ng-container matColumnDef="running">
-    <th mat-header-cell *matHeaderCellDef></th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      @switch (element.status().state) {
-        @case (State.running) {
-          <div class="running-dot green"></div>
-        }
-        @case (State.starting) {
-          <div class="running-dot yellow"></div>
-        }
-      }
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="name">
-    <th mat-header-cell *matHeaderCellDef>Name</th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()"> {{ element.name }}</td>
-  </ng-container>
-
-  <ng-container matColumnDef="lastModified">
-    <th mat-header-cell *matHeaderCellDef>Last Modified</th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      <!--            {{ (element.branchInfo$ | async)?.lastModified | date:'short' }}-->
-      <!--      {{ (element.branchInfo$ | async)?.state | date:'short' }}-->
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="branch">
-    <th mat-header-cell *matHeaderCellDef>Branch</th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      <!--      {{ (element.branchInfo$ | async)?.branch }}-->
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="runningStatus">
-    <th mat-header-cell *matHeaderCellDef>Status</th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      <span>{{ element.status().state }}</span>
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="button">
-    <th mat-header-cell *matHeaderCellDef></th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      @if (element.status().state === State.running) {
-        <button mat-flat-button color="primary" class="stop-button" (click)="element.stop()">Stop</button>
-      } @else {
-        <button mat-flat-button color="primary" class="start-button" (click)="element.start()"
-                [disabled]="element.status().state === State.starting">
-          Start
-        </button>
-      }
-    </td>
-  </ng-container>
-
-  <ng-container matColumnDef="menu">
-    <th mat-header-cell *matHeaderCellDef></th>
-    <td mat-cell *matCellDef="let element; dataSource: repos()">
-      <button mat-icon-button [matMenuTriggerFor]="menu">
-        <mat-icon>more_vert</mat-icon>
+  <mat-form-field>
+    <mat-label>Repo Name</mat-label>
+    <input matInput [formControl]="nameFilter" spellcheck="false">
+    @if (nameFilter.value) {
+      <button matSuffix mat-icon-button (click)="nameFilter.reset()">
+        <mat-icon>close</mat-icon>
       </button>
-      <mat-menu #menu="matMenu">
-      </mat-menu>
-    </td>
-  </ng-container>
+    }
+  </mat-form-field>
 
-  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-</table>
+  <table mat-table [dataSource]="repos()" class="mat-elevation-z8">
 
+    <ng-container matColumnDef="running">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()">
+        @switch (element.status().state) {
+          @case (State.running) {
+            <div class="running-dot green"></div>
+          }
+          @case (State.starting) {
+            <div class="running-dot yellow"></div>
+          }
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()"> {{ element.name }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="lastModified">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Modified</th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()">
+        <!--            {{ (element.branchInfo$ | async)?.lastModified | date:'short' }}-->
+        <!--      {{ (element.branchInfo$ | async)?.state | date:'short' }}-->
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="branch">
+      <th mat-header-cell *matHeaderCellDef>Branch</th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()">
+        <!--      {{ (element.branchInfo$ | async)?.branch }}-->
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="button">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()">
+        @if (element.status().state === State.running) {
+          <button mat-flat-button color="primary" class="stop-button" (click)="element.stop()">
+            Stop
+          </button>
+        } @else {
+          <button mat-flat-button color="primary" class="start-button" (click)="element.start()"
+                  [disabled]="element.status().state === State.starting">
+            Start
+          </button>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="menu">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let element; dataSource: repos()">
+        <button mat-icon-button [matMenuTriggerFor]="menu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+        </mat-menu>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+</div>
