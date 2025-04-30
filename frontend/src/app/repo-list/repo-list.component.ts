@@ -13,6 +13,7 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldDefaultOptions } from '@ang
 import { debounceTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import State = repo.State;
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-repo-list',
@@ -29,12 +30,7 @@ import State = repo.State;
     MatLabel,
     ReactiveFormsModule,
     MatSuffix,
-  ],
-  providers: [
-    {
-      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' } satisfies MatFormFieldDefaultOptions
-    }
+    NgClass,
   ],
   templateUrl: './repo-list.component.html',
   styleUrl: './repo-list.component.scss'

@@ -1,0 +1,53 @@
+<div class="settings">
+  <div class="settings__header">
+    <h1>Settings</h1>
+    <button mat-flat-button color="primary" (click)="save()" [disabled]="form.invalid">Save</button>
+  </div>
+  <form [formGroup]="form" class="settings__form">
+    <div class="settings__section">
+      <h3>Environment Overrides</h3>
+      @for (param of form.controls.envParams.controls; track $index; let i = $index) {
+        <ng-container formArrayName="envParams">
+          <ng-container [formGroupName]="i">
+            <div class="settings__env-param">
+              <mat-checkbox formControlName="enabled"></mat-checkbox>
+              <mat-form-field>
+                <mat-label>Env Param</mat-label>
+                <input matInput formControlName="key">
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Value</mat-label>
+                <input matInput formControlName="value">
+              </mat-form-field>
+              <button mat-icon-button (click)="form.controls.envParams.removeAt(i)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </ng-container>
+        </ng-container>
+      }
+      @if (form.controls.envParams.controls.length < 1) {
+        <div class="settings__empty-params-list">
+          No params set...
+        </div>
+      }
+      <div class="settings__env-override-buttons">
+        <button mat-button color="primary" (click)="addParam()">Add</button>
+      </div>
+    </div>
+
+    <div class="settings__section">
+      <h3>App Settings</h3>
+      <mat-form-field>
+        <mat-label>Repos Location</mat-label>
+        <input matInput formControlName="reposDirPath">
+        <mat-hint>Where your repos live</mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>App Storage Location</mat-label>
+        <input matInput formControlName="dataDirPath">
+        <mat-hint>This is where app settings, logs, and other things needed by this app will be saved</mat-hint>
+      </mat-form-field>
+    </div>
+  </form>
+</div>

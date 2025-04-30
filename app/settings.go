@@ -1,6 +1,105 @@
 package app
 
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
+)
+
 type Settings struct {
-	ReposDirPath string
-	DataDirPath  string
+	ctx context.Context
+
+	ReposDirPath string `json:"reposDirPath"`
+	DataDirPath  string `json:"dataDirPath"`
+
+	EnvParams []EnvParam `json:"envParams"`
+
+	settingsPath string
+}
+
+func (this *Settings) Startup(ctx context.Context) error {
+	this.ctx = ctx
+
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return fmt.Errorf("could not get user config dir: %w", err)
+	}
+	settingsDir := filepath.Join(configDir, "phaas-localservices-manager")
+	this.settingsPath = filepath.Join(settingsDir, "settings.json")
+	if _, err := os.Stat(this.settingsPath); errors.Is(err, os.ErrNotExist) {
+		err = os.MkdirAll(settingsDir, os.ModePerm)
+		if err != nil && !errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("could not create settings directory: %w", err)
+		}
+		_, err = os.Create(this.settingsPath)
+		if err != nil && !errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("could not create settings file: %w", err)
+		}
+	}
+
+	settingsJSON, err := os.ReadFile(this.settingsPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to read settings: %w", err)
+	}
+
+	if settingsJSON == nil {
+		return nil
+	}
+
+	err = json.Unmarshal(settingsJSON, this)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal settings.json: %w", err)
+	}
+	slog.With(slog.Any("settings", this)).InfoContext(ctx, "Loaded with settings")
+
+	return nil
+}
+
+func (this *Settings) GetSettings() Settings {
+	return *this
+}
+
+func (this *Settings) SaveSettings(settings Settings) error {
+	this.ReposDirPath = settings.ReposDirPath
+	this.DataDirPath = settings.DataDirPath
+	this.EnvParams = settings.EnvParams
+
+	err := this.writeToFile()
+	if err != nil {
+		return fmt.Errorf("failed to save app settings: %w", err)
+	}
+	return nil
+}
+
+func (this *Settings) SaveEnvParamOverrides(params []EnvParam) {
+	this.EnvParams = params
+	slog.With(slog.Any("params", this.EnvParams)).Info("Env Param Overrides")
+}
+
+type EnvParam struct {
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+	Enabled bool   `json:"enabled"`
+}
+
+func (this *Settings) GetEnvParamOverrides() []EnvParam {
+	return this.EnvParams
+}
+
+func (this *Settings) writeToFile() error {
+	settingsJSON, err := json.MarshalIndent(this, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal settings to json to save to file: %s", err)
+	}
+
+	err = os.WriteFile(this.settingsPath, settingsJSON, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to save settings to file: %s", err)
+	}
+
+	return nil
 }

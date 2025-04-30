@@ -10,6 +10,7 @@ import (
 	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/dockerclient"
 	"phaas-localservices-ui/scheduler"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -181,6 +182,14 @@ func (this *apiController) Start() error {
 
 	// TODO: need to add support for this in mage
 	cmd.Env = append(cmd.Environ(), "PHAAS_DOCKER_DISABLE_INTERACTIVE=1")
+	overrides := this.appSettings.GetEnvParamOverrides()
+	envParams := make([]string, 0, len(overrides))
+	for _, param := range overrides {
+		if param.Enabled {
+			envParams = append(envParams, fmt.Sprintf("PHAAS_OVERRIDE_%s=%s", strings.ToUpper(param.Key), param.Value))
+		}
+	}
+	cmd.Env = append(cmd.Env, envParams...)
 
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile

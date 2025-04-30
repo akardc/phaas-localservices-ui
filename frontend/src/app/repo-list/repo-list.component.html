@@ -15,14 +15,9 @@
     <ng-container matColumnDef="running">
       <th mat-header-cell *matHeaderCellDef></th>
       <td mat-cell *matCellDef="let element; dataSource: repos()">
-        @switch (element.status().state) {
-          @case (State.running) {
-            <div class="running-dot green"></div>
-          }
-          @case (State.starting) {
-            <div class="running-dot yellow"></div>
-          }
-        }
+        <div class="running-dot"
+             [ngClass]="{'green': element.status().state === State.running, 'yellow': element.status().state === State.starting}">
+        </div>
       </td>
     </ng-container>
 

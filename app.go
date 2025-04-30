@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/repo"
 	repobrowser "phaas-localservices-ui/repo_browser"
@@ -21,10 +23,7 @@ type App struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	jobScheduler := scheduler.New()
-	appSettings := &app.Settings{
-		ReposDirPath: "/Users/cakard/go/src/github.com/BidPal",
-		DataDirPath:  "/users/cakard/Documents/phaas-localservices-ui",
-	}
+	appSettings := &app.Settings{}
 	repoFactory := repo.NewFactory(appSettings, jobScheduler)
 
 	return &App{
@@ -40,10 +39,18 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	err := a.appSettings.Startup(ctx)
+	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(ctx, "failed to load app settings")
+		os.Exit(1)
+	}
 	a.repoBrowser.Startup(ctx)
 	a.jobScheduler.Start(ctx)
 }
 
 func (a *App) getExposedInterfaces() []any {
-	return []any{a.repoBrowser}
+	return []any{
+		a.repoBrowser,
+		a.appSettings,
+	}
 }

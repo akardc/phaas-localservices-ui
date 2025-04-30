@@ -1,0 +1,42 @@
+.settings {
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.settings__header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.settings__form {
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  gap: 64px;
+}
+
+.settings__section {
+  display: flex;
+  flex-flow: column;
+  align-items: stretch;
+  gap: 32px;
+}
+
+.settings__env-param {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-form-field {
+    flex: 1 0 auto;
+  }
+}
+
+.settings__env-override-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+}

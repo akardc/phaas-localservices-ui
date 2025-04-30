@@ -1,0 +1,26 @@
+@use '@angular/material' as mat;
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 64px;
+  width: 100%;
+  background: var(--mat-sys-primary-container);
+}
+
+.app__body {
+  margin-top: 64px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.app__content {
+  padding: 16px;
+}

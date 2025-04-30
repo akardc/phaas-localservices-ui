@@ -80,6 +80,9 @@ type ListReposOptions struct {
 }
 
 func (this *RepoBrowser) initRepos() error {
+	if this.settings.ReposDirPath == "" {
+		return nil
+	}
 	folders, err := os.ReadDir(this.settings.ReposDirPath)
 	if err != nil {
 		return fmt.Errorf("failed to read repos: %w", err)
