@@ -2,6 +2,8 @@ package repo
 
 import (
 	"context"
+	slogctx "github.com/veqryn/slog-context"
+	"log/slog"
 	"os"
 	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/scheduler"
@@ -70,7 +72,7 @@ var uiRegex = regexp.MustCompile("phaas-.*-ui")
 func (this *Factory) BuildRepoController(ctx context.Context, path string, name string, dir os.DirEntry) Controller {
 	if apiRegex.MatchString(name) {
 		return &apiController{
-			ctx:          ctx,
+			ctx:          slogctx.Append(ctx, slog.String("repo", name)),
 			appSettings:  this.settings,
 			jobScheduler: this.jobScheduler,
 			name:         name,

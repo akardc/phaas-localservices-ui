@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"phaas-localservices-ui/app"
@@ -85,6 +86,7 @@ func (this *RepoBrowser) InitRepos() error {
 	}
 	folders, err := os.ReadDir(this.settings.ReposDirPath)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "failed to read repos")
 		return fmt.Errorf("failed to read repos: %w", err)
 	}
 
@@ -118,11 +120,12 @@ func (this *RepoBrowser) ListRepos() ([]repo.BasicDetails, error) {
 func (this *RepoBrowser) GetRepoStatus(repoName string) (repo.Status, error) {
 	repoController, err := this.repos.Get(repoName)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "failed to get repo")
 		return repo.Status{}, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
 	}
 	status, err := repoController.GetStatus()
 	if err != nil {
-		return repo.Status{}, fmt.Errorf("failed to get repo '%s': %w", repoName, err)
+		return repo.Status{}, fmt.Errorf("failed to get repo status: %w", err)
 	}
 	return status, nil
 }

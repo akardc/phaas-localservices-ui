@@ -5,6 +5,7 @@ go 1.23
 require (
 	github.com/docker/docker v28.1.1+incompatible
 	github.com/go-git/go-git/v5 v5.13.2
+	github.com/veqryn/slog-context v0.8.0
 	github.com/wailsapp/wails/v2 v2.10.1
 )
 

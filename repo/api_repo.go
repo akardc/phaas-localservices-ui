@@ -43,6 +43,7 @@ func (this *apiController) GetBasicDetails() BasicDetails {
 func (this *apiController) GetLastModifiedTime() (time.Time, error) {
 	dirInfo, err := this.dir.Info()
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "error getting repo details")
 		return time.Time{}, fmt.Errorf("error getting repo details: %w", err)
 	}
 	return dirInfo.ModTime(), nil
@@ -51,11 +52,12 @@ func (this *apiController) GetLastModifiedTime() (time.Time, error) {
 func (this *apiController) GetActiveBranch() (string, error) {
 	repo, err := git.PlainOpen(this.path)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "error opening repo")
 		return "", fmt.Errorf("error opening repo: %w", err)
 	}
 	head, err := repo.Head()
 	if err != nil {
-		slog.With(slog.Any("error", err)).Error("Failed to get HEAD")
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to get HEAD")
 	}
 	branch := ""
 	if head != nil {
@@ -82,6 +84,7 @@ func (this *apiController) GetStatus() (Status, error) {
 
 	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Error getting docker container status")
 		return Status{}, fmt.Errorf("error getting docker container status: %w", err)
 	}
 	if status == nil || status.State == nil {
@@ -110,6 +113,7 @@ func (this *apiController) RegisterStatusWatcher() error {
 		}
 	})
 	if err != nil && !errors.Is(err, scheduler.ErrJobAlreadyExists) {
+		slog.With(slog.Any("error", err)).Error("Error refreshing status for repo")
 		return fmt.Errorf("error adding status watcher job: %w", err)
 	}
 	return nil
@@ -136,6 +140,7 @@ func (this *apiController) refreshStatus() error {
 
 	newStatus, err := this.GetStatus()
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Error getting status for repo")
 		return fmt.Errorf("error getting status for repo: %w", err)
 	}
 
@@ -159,6 +164,7 @@ func (this *apiController) Start() error {
 
 	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
+		slog.With(slog.Any("error", err)).Error("Error getting repo status")
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status != nil && status.State.Running {
@@ -172,11 +178,13 @@ func (this *apiController) Start() error {
 	repoDataPath := fmt.Sprintf("%s/%s", this.appSettings.DataDirPath, this.name)
 	err = os.Mkdir(repoDataPath, os.ModePerm)
 	if err != nil && !errors.Is(err, os.ErrExist) {
+		slog.With(slog.Any("error", err)).Error("Error creating repo data directory")
 		return fmt.Errorf("failed to create data dir: %w", err)
 	}
 	logFilePath := fmt.Sprintf("%s/service.log", repoDataPath)
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
+		slog.With(slog.Any("error", err)).Error("Error opening repo log file")
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
 
@@ -195,6 +203,7 @@ func (this *apiController) Start() error {
 
 	err = cmd.Start()
 	if err != nil {
+		slog.With(slog.Any("error", err)).Error("Failed to start repo")
 		return fmt.Errorf("failed to start repo: %w", err)
 	}
 	if cmd.Process != nil {
@@ -213,6 +222,7 @@ func (this *apiController) Start() error {
 func (this *apiController) Stop() error {
 	status, err := dockerclient.GetStatus(this.ctx, this.name)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
+		slog.With(slog.Any("error", err)).Error("Error getting repo status")
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status == nil || !status.State.Running {
@@ -233,6 +243,7 @@ func (this *apiController) startMysql() error {
 	mysqlName := this.name + "-mysql"
 	status, err := dockerclient.GetStatus(this.ctx, mysqlName)
 	if err != nil && !errors.Is(err, dockerclient.ErrNoContainerFound) {
+		slog.With(slog.Any("error", err)).Error("Error getting repo status")
 		return fmt.Errorf("error getting repo status: %w", err)
 	}
 	if status != nil && status.State.Running {
@@ -246,6 +257,7 @@ func (this *apiController) startMysql() error {
 
 	err = cmd.Run()
 	if err != nil {
+		slog.With(slog.Any("error", err)).Error("Failed to start mysql")
 		return fmt.Errorf("failed to start mysql: %w", err)
 	}
 

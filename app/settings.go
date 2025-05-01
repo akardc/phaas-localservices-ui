@@ -25,28 +25,40 @@ type Settings struct {
 	settingsPath string
 }
 
+func GetSettingsDir() (string, error) {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		slog.With(slog.Any("error", err)).Error("Could not get user config dir")
+		return "", fmt.Errorf("could not get user config dir: %w", err)
+	}
+	return filepath.Join(configDir, "phaas-localservices-manager"), nil
+}
+
 func (this *Settings) Startup(ctx context.Context) error {
 	this.ctx = ctx
 
-	configDir, err := os.UserConfigDir()
+	settingsDir, err := GetSettingsDir()
 	if err != nil {
-		return fmt.Errorf("could not get user config dir: %w", err)
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Could not get user settings dir")
+		return fmt.Errorf("could not get user settings dir: %w", err)
 	}
-	settingsDir := filepath.Join(configDir, "phaas-localservices-manager")
 	this.settingsPath = filepath.Join(settingsDir, "settings.json")
 	if _, err := os.Stat(this.settingsPath); errors.Is(err, os.ErrNotExist) {
 		err = os.MkdirAll(settingsDir, os.ModePerm)
 		if err != nil && !errors.Is(err, os.ErrExist) {
+			slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Could not create settings directory")
 			return fmt.Errorf("could not create settings directory: %w", err)
 		}
 		_, err = os.Create(this.settingsPath)
 		if err != nil && !errors.Is(err, os.ErrExist) {
+			slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Could not create settings file")
 			return fmt.Errorf("could not create settings file: %w", err)
 		}
 	}
 
 	settingsJSON, err := os.ReadFile(this.settingsPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to read settings")
 		return fmt.Errorf("failed to read settings: %w", err)
 	}
 
@@ -56,6 +68,7 @@ func (this *Settings) Startup(ctx context.Context) error {
 
 	err = json.Unmarshal(settingsJSON, this)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to unmarshal settings.json")
 		return fmt.Errorf("failed to unmarshal settings.json: %w", err)
 	}
 	slog.With(slog.Any("settings", this)).InfoContext(ctx, "Loaded with settings")
@@ -75,6 +88,7 @@ func (this *Settings) SaveSettings(settings Settings) error {
 
 	err := this.writeToFile()
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to save app settings")
 		return fmt.Errorf("failed to save app settings: %w", err)
 	}
 	if reposDirChanged {
@@ -101,11 +115,13 @@ func (this *Settings) GetEnvParamOverrides() []EnvParam {
 func (this *Settings) writeToFile() error {
 	settingsJSON, err := json.MarshalIndent(this, "", "  ")
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to marshal settings to json to save to file")
 		return fmt.Errorf("failed to marshal settings to json to save to file: %s", err)
 	}
 
 	err = os.WriteFile(this.settingsPath, settingsJSON, os.ModePerm)
 	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(this.ctx, "Failed to save settings to file")
 		return fmt.Errorf("failed to save settings to file: %s", err)
 	}
 

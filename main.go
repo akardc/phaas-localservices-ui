@@ -2,8 +2,13 @@ package main
 
 import (
 	"embed"
+	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"phaas-localservices-ui/app"
 	"phaas-localservices-ui/repo"
 
 	"github.com/wailsapp/wails/v2"
@@ -16,12 +21,26 @@ import (
 var assets embed.FS
 
 func SetupLogger() logger.Logger {
-	logger := slog.Default()
-	slogger := SlogLogger{
-		logger: logger,
+	dir, err := app.GetSettingsDir()
+	if err != nil {
+		panic(fmt.Errorf("could not get user config dir: %w", err))
 	}
-	slog.SetDefault(logger)
-	return slogger
+	err = os.Mkdir(dir, os.ModeDir)
+	if err != nil && !errors.Is(err, os.ErrExist) {
+		panic(fmt.Errorf("could not create user config dir: %w", err))
+	}
+	logFile, err := os.Create(filepath.Join(dir, "logs.json"))
+	if err != nil {
+		panic(fmt.Errorf("could not create log file: %w", err))
+	}
+
+	multiwriter := io.MultiWriter(os.Stdout, logFile)
+	fileLogger := slog.New(slog.NewJSONHandler(multiwriter, &slog.HandlerOptions{}))
+	slog.SetDefault(fileLogger)
+	slogLogger := SlogLogger{
+		logger: fileLogger,
+	}
+	return slogLogger
 }
 
 type SlogLogger struct {
