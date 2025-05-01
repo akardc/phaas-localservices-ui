@@ -1,22 +1,20 @@
 <div class="app">
-  <mat-toolbar class="app__toolbar">
-    <button mat-icon-button (click)="sidenav.toggle()">
-      <mat-icon>menu</mat-icon>
-    </button>
-  </mat-toolbar>
+  <div class="app__nav">
+    <mat-nav-list class="app__nav">
+      <div mat-list-item>
+        <a mat-icon-button class="app__nav-item" color="primary" routerLink="/repos" routerLinkActive="active"
+           matTooltip="Repos" matTooltipPosition="right">
+          <mat-icon>storage</mat-icon>
+        </a>
+      </div>
+      <div mat-list-item>
+        <a mat-icon-button class="app__nav-item" color="primary" routerLink="/settings" routerLinkActive="active"
+           matTooltip="Settings" matTooltipPosition="right">
+          <mat-icon>settings</mat-icon>
+        </a>
+      </div>
+    </mat-nav-list>
+  </div>
 
-  <mat-sidenav-container class="app__body">
-
-    <mat-sidenav #sidenav mode="over">
-      <mat-nav-list class="app__nav">
-        <a mat-list-item class="app__nav-item" routerLink="/repos" routerLinkActive="active">Repos</a>
-        <a mat-list-item class="app__nav-item" routerLink="/settings" routerLinkActive="active">Settings</a>
-      </mat-nav-list>
-    </mat-sidenav>
-
-    <mat-sidenav-content class="app__content">
-      <router-outlet></router-outlet>
-    </mat-sidenav-content>
-
-  </mat-sidenav-container>
+  <router-outlet></router-outlet>
 </div>
