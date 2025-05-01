@@ -1,7 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { ListRepos } from '../../../wailsjs/go/repobrowser/RepoBrowser';
+import { InitRepos, ListRepos } from '../../../wailsjs/go/repobrowser/RepoBrowser';
 import { RepoController } from './repo-controller';
-import { from, retry } from 'rxjs';
+import { from, retry, switchMap } from 'rxjs';
+import { EventsOn } from '../../../wailsjs/runtime';
 
 @Injectable({
   providedIn: 'root'
@@ -13,17 +14,8 @@ export class ControllersService {
   private allRepos: RepoController[] = [];
 
   constructor() {
-    from(ListRepos()).pipe(
-      retry(2),
-    ).subscribe({
-      next: (list) => {
-        list.forEach((repoDetails) => this.allRepos.push(new RepoController(repoDetails)));
-        this.sortByName();
-      },
-      error: (err) => {
-        console.log('Failed to list repos', err);
-      }
-    });
+    this.rebuildList();
+    EventsOn('repos-location-changed', () => this.rebuildList());
   }
 
   sortByName(direction?: 'asc' | 'desc' | '') {
@@ -39,5 +31,21 @@ export class ControllersService {
       }
     });
     this.controllers.set(this.allRepos);
+  }
+
+  private rebuildList() {
+    from(InitRepos()).pipe(
+      switchMap(() => from(ListRepos()).pipe(
+        retry(2),
+      )),
+    ).subscribe({
+      next: (list) => {
+        list.forEach((repoDetails) => this.allRepos.push(new RepoController(repoDetails)));
+        this.sortByName();
+      },
+      error: (err) => {
+        console.log('Failed to list repos', err);
+      }
+    });
   }
 }

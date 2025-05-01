@@ -10,6 +10,10 @@ export function GetRepoStatus(arg1) {
   return window['go']['repobrowser']['RepoBrowser']['GetRepoStatus'](arg1);
 }
 
+export function InitRepos() {
+  return window['go']['repobrowser']['RepoBrowser']['InitRepos']();
+}
+
 export function ListRepos() {
   return window['go']['repobrowser']['RepoBrowser']['ListRepos']();
 }

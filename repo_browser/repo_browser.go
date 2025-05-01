@@ -69,7 +69,7 @@ func NewRepoBrowser(
 
 func (this *RepoBrowser) Startup(ctx context.Context) {
 	this.ctx = ctx
-	err := this.initRepos()
+	err := this.InitRepos()
 	if err != nil {
 		panic(fmt.Errorf("failed to init repos: %w", err))
 	}
@@ -79,7 +79,7 @@ type ListReposOptions struct {
 	NameRegex string `json:"nameRegex"`
 }
 
-func (this *RepoBrowser) initRepos() error {
+func (this *RepoBrowser) InitRepos() error {
 	if this.settings.ReposDirPath == "" {
 		return nil
 	}

@@ -24,3 +24,7 @@
 .app__content {
   padding: 16px;
 }
+
+.app__nav-item.active {
+  background: rgba(gray, 0.4);
+}

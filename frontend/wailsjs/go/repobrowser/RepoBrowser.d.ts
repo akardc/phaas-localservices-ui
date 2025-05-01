@@ -7,6 +7,8 @@ export function GetRepoRepoStatusNotificationChannel(arg1:string):Promise<string
 
 export function GetRepoStatus(arg1:string):Promise<repo.Status>;
 
+export function InitRepos():Promise<void>;
+
 export function ListRepos():Promise<Array<repo.BasicDetails>>;
 
 export function RegisterRepoStatusWatcher(arg1:string):Promise<void>;

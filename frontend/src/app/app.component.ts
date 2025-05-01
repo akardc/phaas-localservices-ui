@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
 import { MatIconButton } from '@angular/material/button';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldDefaultOptions } from '@angular/material/form-field';
 import { MatListItem, MatNavList } from '@angular/material/list';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +21,8 @@ import { MatListItem, MatNavList } from '@angular/material/list';
     RouterLink,
     RouterOutlet,
     MatNavList,
-    MatListItem
+    MatListItem,
+    RouterLinkActive
   ],
   providers: [
     {
@@ -31,4 +34,15 @@ import { MatListItem, MatNavList } from '@angular/material/list';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
+
+  @ViewChild('sidenav') menuSidenav?: MatSidenav;
+
+  constructor(
+    private router: Router,
+  ) {
+    this.router.events.pipe(
+      filter((ev): ev is NavigationEnd => ev instanceof NavigationEnd),
+      takeUntilDestroyed(),
+    ).subscribe(() => this.menuSidenav?.close());
+  }
 }

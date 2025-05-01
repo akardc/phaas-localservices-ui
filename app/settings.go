@@ -8,7 +8,11 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+const ReposLocationChangedEvent = "repos-location-changed"
 
 type Settings struct {
 	ctx context.Context
@@ -46,7 +50,7 @@ func (this *Settings) Startup(ctx context.Context) error {
 		return fmt.Errorf("failed to read settings: %w", err)
 	}
 
-	if settingsJSON == nil {
+	if len(settingsJSON) == 0 {
 		return nil
 	}
 
@@ -64,6 +68,7 @@ func (this *Settings) GetSettings() Settings {
 }
 
 func (this *Settings) SaveSettings(settings Settings) error {
+	reposDirChanged := this.ReposDirPath != settings.ReposDirPath
 	this.ReposDirPath = settings.ReposDirPath
 	this.DataDirPath = settings.DataDirPath
 	this.EnvParams = settings.EnvParams
@@ -71,6 +76,9 @@ func (this *Settings) SaveSettings(settings Settings) error {
 	err := this.writeToFile()
 	if err != nil {
 		return fmt.Errorf("failed to save app settings: %w", err)
+	}
+	if reposDirChanged {
+		runtime.EventsEmit(this.ctx, ReposLocationChangedEvent)
 	}
 	return nil
 }

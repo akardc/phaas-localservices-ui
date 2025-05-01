@@ -180,7 +180,6 @@ func (this *apiController) Start() error {
 		return fmt.Errorf("failed to open log file: %w", err)
 	}
 
-	// TODO: need to add support for this in mage
 	cmd.Env = append(cmd.Environ(), "PHAAS_DOCKER_DISABLE_INTERACTIVE=1")
 	overrides := this.appSettings.GetEnvParamOverrides()
 	envParams := make([]string, 0, len(overrides))
@@ -200,6 +199,10 @@ func (this *apiController) Start() error {
 	}
 	if cmd.Process != nil {
 		this.startedPID = cmd.Process.Pid
+	}
+	err = this.refreshStatus()
+	if err != nil {
+		slog.With(slog.String("repo", this.name)).Error("Error refreshing status for repo")
 	}
 
 	this.startLowLatencyStatusWatcher()
@@ -239,7 +242,6 @@ func (this *apiController) startMysql() error {
 
 	cmd := exec.Command("mage", "mysqlup")
 	cmd.Dir = this.path
-	// TODO: need to add support for this in mage
 	cmd.Env = append(cmd.Environ(), "PHAAS_DOCKER_DISABLE_INTERACTIVE=1")
 
 	err = cmd.Run()
