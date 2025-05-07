@@ -17,8 +17,10 @@ const ReposLocationChangedEvent = "repos-location-changed"
 type Settings struct {
 	ctx context.Context
 
-	ReposDirPath string `json:"reposDirPath"`
-	DataDirPath  string `json:"dataDirPath"`
+	ReposDirPath        string `json:"reposDirPath"`
+	DataDirPath         string `json:"dataDirPath"`
+	ShellExecutablePath string `json:"shellExecutablePath"`
+	ShellInitFilePath   string `json:"shellInitFilePath"`
 
 	EnvParams []EnvParam `json:"envParams"`
 
@@ -95,11 +97,6 @@ func (this *Settings) SaveSettings(settings Settings) error {
 		runtime.EventsEmit(this.ctx, ReposLocationChangedEvent)
 	}
 	return nil
-}
-
-func (this *Settings) SaveEnvParamOverrides(params []EnvParam) {
-	this.EnvParams = params
-	slog.With(slog.Any("params", this.EnvParams)).Info("Env Param Overrides")
 }
 
 type EnvParam struct {

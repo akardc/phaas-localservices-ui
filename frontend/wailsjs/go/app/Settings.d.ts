@@ -7,8 +7,6 @@ export function GetEnvParamOverrides():Promise<Array<app.EnvParam>>;
 
 export function GetSettings():Promise<app.Settings>;
 
-export function SaveEnvParamOverrides(arg1:Array<app.EnvParam>):Promise<void>;
-
 export function SaveSettings(arg1:app.Settings):Promise<void>;
 
 export function Startup(arg1:context.Context):Promise<void>;

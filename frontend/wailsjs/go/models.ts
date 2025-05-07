@@ -19,6 +19,11 @@ export namespace app {
 	export class Settings {
 	    reposDirPath: string;
 	    dataDirPath: string;
+	    goPath: string;
+	    goRoot: string;
+	    dockerPath: string;
+	    shellExecutablePath: string;
+	    shellInitFilePath: string;
 	    envParams: EnvParam[];
 	
 	    static createFrom(source: any = {}) {
@@ -29,6 +34,11 @@ export namespace app {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.reposDirPath = source["reposDirPath"];
 	        this.dataDirPath = source["dataDirPath"];
+	        this.goPath = source["goPath"];
+	        this.goRoot = source["goRoot"];
+	        this.dockerPath = source["dockerPath"];
+	        this.shellExecutablePath = source["shellExecutablePath"];
+	        this.shellInitFilePath = source["shellInitFilePath"];
 	        this.envParams = this.convertValues(source["envParams"], EnvParam);
 	    }
 	

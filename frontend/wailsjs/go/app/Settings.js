@@ -10,10 +10,6 @@ export function GetSettings() {
   return window['go']['app']['Settings']['GetSettings']();
 }
 
-export function SaveEnvParamOverrides(arg1) {
-  return window['go']['app']['Settings']['SaveEnvParamOverrides'](arg1);
-}
-
 export function SaveSettings(arg1) {
   return window['go']['app']['Settings']['SaveSettings'](arg1);
 }

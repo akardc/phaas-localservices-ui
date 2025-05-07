@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"phaas-localservices-ui/app"
+	"phaas-localservices-ui/mage"
 	"phaas-localservices-ui/repo"
 	repobrowser "phaas-localservices-ui/repo_browser"
 	"phaas-localservices-ui/scheduler"
@@ -42,6 +43,11 @@ func (a *App) startup(ctx context.Context) {
 	err := a.appSettings.Startup(ctx)
 	if err != nil {
 		slog.With(slog.Any("error", err)).ErrorContext(ctx, "failed to load app settings")
+		os.Exit(1)
+	}
+	err = mage.Init(ctx, a.appSettings)
+	if err != nil {
+		slog.With(slog.Any("error", err)).ErrorContext(ctx, "Failed to init shell")
 		os.Exit(1)
 	}
 	a.repoBrowser.Startup(ctx)
