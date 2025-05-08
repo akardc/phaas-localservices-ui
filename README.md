@@ -2,18 +2,23 @@
 
 ## About
 
-This is the official Wails Vanilla-TS template.
+This tool can be used to start, stop, and view which cloned phaas services are running. Additionally you can set global
+environment params to be used when starting the services (i.e. `PHAAS_VIRTUALEVENTAPIURL`).
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+To begin using the tool, go to the settings tab and set the paths for the shell you use (e.g. `/bin/bash`), the init
+script for that shell (e.g. `/Users/username/.bash_profile`), and the path to where your repos are stored
+(e.g. `/Users/username/go/github.com/BidPal`), then restart the tool. From there, you should see the populated service
+list and be able to start the services.
 
-## Live Development
+Note that services must be using mage-lib v4.47.6 or higher for this tool to start the service.
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+## Future ideas
 
-## Building
+- View logs within the tool
+- View and change active git branch
+- Some way to select a set of services to run and automatically set their env params to point to each other
+- Figure out a way to stop using using shell commands to call `mage run`
 
-To build a redistributable, production mode package, use `wails build`.
+## Development
+
+This tool is built with [Wails](https://wails.io/) and Angular. To build and run, follow directions for each of those.
