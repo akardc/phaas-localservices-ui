@@ -39,6 +39,16 @@
     <div class="settings__section">
       <h3>App Settings</h3>
       <mat-form-field>
+        <mat-label>Shell Executable Location</mat-label>
+        <input matInput formControlName="shellExecutablePath">
+        <mat-hint>Where the executable for the shell you use lives (e.g. /bin/bash)</mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Shell Init File Location</mat-label>
+        <input matInput formControlName="shellInitFilePath">
+        <mat-hint>Where the init file for your shell lives (e.g. /Users/username/.bash_profile)</mat-hint>
+      </mat-form-field>
+      <mat-form-field>
         <mat-label>Repos Location</mat-label>
         <input matInput formControlName="reposDirPath">
         <mat-hint>Where your repos live</mat-hint>

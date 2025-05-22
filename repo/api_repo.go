@@ -157,7 +157,7 @@ func (this *apiController) refreshStatus() error {
 }
 
 func (this *apiController) Start() error {
-	slog.With(slog.String("PATH", os.Getenv("PATH"))).InfoContext(this.ctx, "Starting")
+	slog.InfoContext(this.ctx, "Starting")
 
 	err := this.mysqlUp()
 	if err != nil {

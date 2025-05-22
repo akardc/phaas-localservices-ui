@@ -29,6 +29,8 @@ export class SettingsComponent implements OnInit {
   form = new FormGroup({
     dataDirPath: new FormControl('', [Validators.required]),
     reposDirPath: new FormControl('', [Validators.required]),
+    shellExecutablePath: new FormControl('', [Validators.required]),
+    shellInitFilePath: new FormControl('', [Validators.required]),
     envParams: new FormArray<FormGroup<{
       key: FormControl<string | null>,
       value: FormControl<string | null>,
@@ -42,6 +44,8 @@ export class SettingsComponent implements OnInit {
         console.log('[Settings] Loaded settings', settings)
         this.form.controls.dataDirPath.setValue(settings?.dataDirPath || '');
         this.form.controls.reposDirPath.setValue(settings?.reposDirPath || '');
+        this.form.controls.shellExecutablePath.setValue(settings?.shellExecutablePath || '');
+        this.form.controls.shellInitFilePath.setValue(settings?.shellInitFilePath || '');
         if (settings?.envParams) {
           settings.envParams.forEach((param) => {
             this.form.controls.envParams.push(new FormGroup({

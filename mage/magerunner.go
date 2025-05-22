@@ -61,18 +61,20 @@ func ExecWait(ctx context.Context, path string, logTo io.Writer, commands ...str
 	if err != nil {
 		return fmt.Errorf("unable to build mage command: %w", err)
 	}
-	err = cmd.Start()
+	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("failed to start mage command: %w", err)
+		return fmt.Errorf("failed to run mage command: %w", err)
 	}
-	return cmd.Run()
+	return nil
 }
 
 func buildCmd(ctx context.Context, path string, logTo io.Writer, commands ...string) (*exec.Cmd, error) {
 	if defaultRunner == nil {
 		return nil, ErrNotInitialized
 	}
-	cmd := exec.CommandContext(ctx, defaultRunner.appSettings.ShellExecutablePath, "-c", strings.Join(append([]string{"mage"}, commands...), " "))
+
+	cmd := exec.CommandContext(ctx, defaultRunner.appSettings.ShellExecutablePath, "-c", fmt.Sprintf("mage %s", strings.Join(commands, " ")))
+	slog.With(slog.String("command", cmd.String())).InfoContext(ctx, "Executing mage command")
 	cmd.Dir = path
 	cmd.Stdout = logTo
 	cmd.Stderr = logTo
